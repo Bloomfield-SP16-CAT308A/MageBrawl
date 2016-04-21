@@ -18,34 +18,60 @@ public class GameController : Pauseable {
             return _gameController;
         }
     }
-
     public float GameTime = 180;
     private bool paused;
     public Player[] players;
     public Text Player1, Player2, timeLeft;
     [HideInInspector]
     public int player1Score = 0, player2Score = 0;
+    public AudioClip getReady, gameEnding;
 
 
     // Use this for initialization
     void Start () {
         players = getPlayerArray();
+        players[0].playerNumber = 0;
+        players[1].playerNumber = 1;
+        matchStart();
 
 	}
 	
 	// Update is called once per frame
 	void Update () {
-        GameTime -= Time.deltaTime;
+        if (paused)
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+                pauseGame(false);
+            //TODO: pause hud
+        }
+        else {
+            GameTime -= Time.deltaTime;
+            if (Input.GetKeyDown(KeyCode.Space))
+                pauseGame(true);
+        }
+        if (Input.GetKeyDown(KeyCode.Escape))
+            SceneController.Quit();
+        
 	}
 
 
-    private void matchStart()
+    IEnumerator matchStart()
     {
+        AudioSource src = this.gameObject.AddComponent<AudioSource>();
+        src.clip = getReady;
+        src.Play();
+        Pauseable.pauseGame(true);
+        yield return new WaitForSeconds(src.clip.length);
         Invoke("endGame", GameTime);
     }
 
-    private void endGame()
+    IEnumerator endGame()
     {
+        AudioSource src = this.gameObject.AddComponent<AudioSource>();
+        src.clip = gameEnding;
+        src.Play();
+        GameTime += src.clip.length;
+        yield return new WaitForSeconds(src.clip.length);
         if (player1Score > player2Score)
         {
             PlayerPrefs.SetInt("Winner", 0);
@@ -56,9 +82,8 @@ public class GameController : Pauseable {
             PlayerPrefs.SetInt("Winner", 1);
             PlayerPrefs.SetInt("Score", player2Score);
         }
-        
 
-            //TODO: Put in SceneStuff.
+        SceneController.targetScene("WinScene");
     }
 
     private void UI_Update()
@@ -82,6 +107,8 @@ public class GameController : Pauseable {
         else
             _gameController.player2Score += score;
     }
+
+
 
     private Player[] getPlayerArray()
     {

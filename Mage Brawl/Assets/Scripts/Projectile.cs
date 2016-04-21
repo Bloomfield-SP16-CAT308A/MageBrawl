@@ -2,7 +2,7 @@
 using System.Collections;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class Projectile : Pauseable {
+public class Projectile : Pauseable  {
     Player maker;
     Rigidbody2D rb;
     public int Score, freezeDuration;
@@ -11,7 +11,7 @@ public class Projectile : Pauseable {
     public float knockBack;
     private bool paused;
     private Vector2 tempVel;
-    private static readonly Vector2 piVect = new Vector2(Mathf.PI, Mathf.PI);
+    private static readonly Vector2 sentinel = Vector2.zero;
 
 
 	// Use this for initialization
@@ -22,7 +22,7 @@ public class Projectile : Pauseable {
 	// Update is called once per frame
 	void Update () {
 	    if(paused)
-            if(tempVel == piVect)
+            if(rb.velocity != sentinel)
             {
                 tempVel = rb.velocity;
                 rb.velocity = Vector2.zero;
@@ -33,7 +33,7 @@ public class Projectile : Pauseable {
     {
         maker = make;
         element = elemen;
-        rb.AddForce(force * transform.forward);
+        rb.velocity = (force * transform.right.normalized);
         papa = make.gameObject;
     }
 
@@ -44,20 +44,20 @@ public class Projectile : Pauseable {
         {
             switch (element)
             {
-                case 1: GameController.gameController.players[Mathf.Abs(0 - maker.playerNumber)].freeze(freezeDuration);
+                case 1: GameController.gameController.players[(maker.playerNumber + 1) % 2].freeze(freezeDuration);
                     GameController.addScore(maker.playerNumber, Score);
                     break;
-                case 2: GameController.gameController.players[Mathf.Abs(0 - maker.playerNumber)].airSmacked(new Vector2(transform.rotation.x,transform.rotation.y), knockBack);
+                case 2: GameController.gameController.players[(maker.playerNumber + 1) % 2].airSmacked(new Vector2(transform.rotation.x,transform.rotation.y), knockBack);
                     GameController.addScore(maker.playerNumber, Score);
                     break;
-                case 3: GameController.gameController.players[Mathf.Abs(0 - maker.playerNumber)].fireSmack();
+                case 3: GameController.gameController.players[(maker.playerNumber + 1) % 2].fireSmack();
                     GameController.addScore(maker.playerNumber, Score);
                     break;
                 default: Debug.Log("Error, no element");
                     break;
-            }
-            Destroy(this.gameObject);
+            }            
         }
+        Destroy(this.gameObject);
     }
 
     protected override void pause(bool pause)
@@ -70,7 +70,7 @@ public class Projectile : Pauseable {
         {
             rb.velocity = tempVel;
             paused = pause;
-            tempVel.Set(piVect.x, piVect.y);
+            tempVel.Set(sentinel.x, sentinel.y);
         }
         else
             paused = pause;
